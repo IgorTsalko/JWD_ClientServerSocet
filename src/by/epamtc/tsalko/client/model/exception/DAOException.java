@@ -1,4 +1,4 @@
-package by.epamtc.tsalko.client.model.dao.exception;
+package by.epamtc.tsalko.client.model.exception;
 
 public class DAOException extends Exception {
 

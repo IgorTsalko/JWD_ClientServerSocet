@@ -18,7 +18,7 @@ public class PropertyReader {
     }
 
     public String getProperty(String propertyName) throws ServiceException {
-        String property = null;
+        String property;
         try {
             FileInputStream inputStream = new FileInputStream("resources/properties.txt");
             properties.load(inputStream);

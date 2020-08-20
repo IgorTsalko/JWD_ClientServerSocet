@@ -1,7 +1,7 @@
-package by.epamtc.tsalko.client.model.dao;
+package by.epamtc.tsalko.client.model;
 
-import by.epamtc.tsalko.client.model.dao.exception.DAOException;
-import by.epamtc.tsalko.client.model.dao.impl.TextDAOImpl;
+import by.epamtc.tsalko.client.model.exception.DAOException;
+import by.epamtc.tsalko.client.model.impl.TextDAOImpl;
 
 public class DAOFactory {
     private static final DAOFactory instance = new DAOFactory();

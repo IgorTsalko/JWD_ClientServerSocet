@@ -1,11 +1,11 @@
-package by.epamtc.tsalko.client.model.dao.impl;
+package by.epamtc.tsalko.client.model.impl;
 
 import by.epamtc.tsalko.bean.impl.Text;
-import by.epamtc.tsalko.client.model.dao.ReaderFromFile;
-import by.epamtc.tsalko.client.model.dao.TextDAO;
-import by.epamtc.tsalko.client.model.dao.exception.DAOException;
-import by.epamtc.tsalko.client.model.dao.parser.ComponentParser;
-import by.epamtc.tsalko.client.model.dao.parser.ParserFactory;
+import by.epamtc.tsalko.client.model.ReaderFromFile;
+import by.epamtc.tsalko.client.model.TextDAO;
+import by.epamtc.tsalko.client.model.exception.DAOException;
+import by.epamtc.tsalko.client.model.parser.ComponentParser;
+import by.epamtc.tsalko.client.model.parser.ParserFactory;
 
 public class TextDAOImpl implements TextDAO {
 

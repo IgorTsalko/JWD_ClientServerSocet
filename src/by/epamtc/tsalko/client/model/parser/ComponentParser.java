@@ -1,9 +1,9 @@
-package by.epamtc.tsalko.client.model.dao.parser;
+package by.epamtc.tsalko.client.model.parser;
 
 import by.epamtc.tsalko.bean.Component;
 import by.epamtc.tsalko.bean.impl.CodeBlock;
 import by.epamtc.tsalko.bean.impl.Text;
-import by.epamtc.tsalko.client.model.dao.exception.DAOException;
+import by.epamtc.tsalko.client.model.exception.DAOException;
 
 import java.util.List;
 import java.util.regex.Matcher;

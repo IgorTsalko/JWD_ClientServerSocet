@@ -5,12 +5,16 @@ import by.epamtc.tsalko.server.service.TextService;
 import by.epamtc.tsalko.server.service.exception.ServiceException;
 import by.epamtc.tsalko.server.service.impl.TextServiceImpl;
 import by.epamtc.tsalko.server.view.MessageSender;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ServerController {
+
+    private static final Logger logger = LogManager.getLogger(ServerController.class);
 
     private static final int PORT = 3575;
 
@@ -22,95 +26,92 @@ public class ServerController {
     private static InputStream in;
     private static OutputStream out;
     private static ObjectOutputStream objectOut;
+    private static BufferedReader reader;
 
     public static void main(String[] args) {
-        startServer();
-    }
-
-    private static void startServer() {
-        System.out.println("Server started");
         try {
             try {
                 messageSender = new MessageSender();
                 textService = new TextServiceImpl();
 
                 serverSocket = new ServerSocket(PORT);
-                clientSocket = serverSocket.accept();
+                logger.info("Server started");
 
-                System.out.println("Connection established");
+                clientSocket = serverSocket.accept();
+                logger.info("Connection established");
+
                 try {
                     in = clientSocket.getInputStream();
                     out = clientSocket.getOutputStream();
+                    reader = new BufferedReader(new InputStreamReader(in));
 
-                    // Sending welcome
-//                    System.out.println("Sending welcome message");
-//                    messageSender.sendWelcomeMessage(out);
-
+                    logger.info("Sending welcome message");
+                    messageSender.sendWelcomeMessage(out);
 
                     sendSerializableText();
                 } finally {
-                    clientSocket.close();
+                    objectOut.close();
                     in.close();
                     out.close();
+                    clientSocket.close();
                 }
             } finally {
                 serverSocket.close();
             }
         } catch (IOException | ServiceException e) {
-            // TODO: log
+            logger.error(e);
         }
     }
 
     private static void sendSerializableText() throws IOException {
-        objectOut = new ObjectOutputStream(out);
-        String requestLine = readEditType();
         Text formattedText = null;
-        System.out.println("requestLine: " + requestLine);
-        String requestType = requestLine.replaceAll("[\\D\\s]", "");
-        System.out.println("requestType: " + requestType);
+        objectOut = new ObjectOutputStream(out);
 
-        Text text = textService.createText(readAllText());
-        System.out.println("Text is parsed");
+        String requestType = readEditType().strip();
+        logger.info("Read request type");
+
+        String allText = readAllText();
+        logger.info("Read allText from flow");
+
+        Text text = textService.createText(allText);
+        logger.info("Text is parsed");
+
         if (requestType.equals("1")) {
-            System.out.println("Started requestType 1");
             formattedText = textService.formSentencesAscending(text);
         } else if (requestType.equals("2")) {
-            System.out.println("Started requestType 2");
             formattedText = textService.formSentenceOppositeReplacementFirstLastWords(text);
         } else {
-            System.out.println("Error requestType");
             messageSender.sendError(out);
         }
 
         if (formattedText != null) {
-            System.out.println("Started serialize");
+            logger.info("Started serialize");
             objectOut.writeObject(formattedText);
-            objectOut.flush();
+            logger.info("Text is serialized");
+        } else {
+            logger.error("Text didn't serialize");
         }
     }
 
     private static String readEditType() throws IOException {
-        String editType = "";
-        while (true) {
-            editType += new String(in.readNBytes(1));
-            if (editType.contains("\n")) {
-                break;
-            }
-        }
-        return editType;
+        logger.info("Start to read edit type");
+        return reader.readLine();
     }
 
     private static String readAllText() throws IOException {
-        StringBuilder builder = new StringBuilder();
-        byte[] buff = new byte[128];
-        while (in.available() > 0) {
-            in.read(buff);
-            builder.append(new String(buff));
+        logger.info("Start to read text from flow");
+        StringBuilder buff = new StringBuilder();
+        String line;
+        while (true) {
+            line = reader.readLine();
+            if (line.contains("--end--")) {
+                break;
+            }
+            buff.append(line).append("\n");
         }
-        System.out.println("Вышли из чтения текста из потока");
-        System.out.println("\n----------------------------------------------------\n");
-        System.out.println(builder);
-        System.out.println("\n----------------------------------------------------\n");
-        return builder.toString();
+        System.out.println("----------------------------------------------------");
+        System.out.println(buff);
+        System.out.println("----------------------------------------------------");
+        return buff.toString();
     }
 }

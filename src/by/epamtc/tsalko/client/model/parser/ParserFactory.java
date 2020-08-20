@@ -1,6 +1,6 @@
-package by.epamtc.tsalko.client.model.dao.parser;
+package by.epamtc.tsalko.client.model.parser;
 
-import by.epamtc.tsalko.client.model.dao.exception.DAOException;
+import by.epamtc.tsalko.client.model.exception.DAOException;
 
 public class ParserFactory {
 

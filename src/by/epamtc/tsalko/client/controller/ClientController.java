@@ -1,14 +1,18 @@
 package by.epamtc.tsalko.client.controller;
 
 import by.epamtc.tsalko.bean.impl.Text;
-import by.epamtc.tsalko.client.model.dao.ReaderFromFile;
-import by.epamtc.tsalko.client.model.dao.exception.DAOException;
+import by.epamtc.tsalko.client.model.ReaderFromFile;
+import by.epamtc.tsalko.client.model.exception.DAOException;
 import by.epamtc.tsalko.client.view.ClientViewer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.Socket;
 
 public class ClientController {
+
+    private static final Logger logger = LogManager.getLogger(ClientController.class);
 
     private static final String HOST = "localhost";
     private static final int PORT = 3575;
@@ -29,48 +33,51 @@ public class ClientController {
     }
 
     public static void startClient() {
-        System.out.println("Client started");
         try {
             try {
                 clientSocket = new Socket(HOST, PORT);
+                logger.info("Client started");
 
                 in = clientSocket.getInputStream();
                 out = clientSocket.getOutputStream();
 
-//                clientViewer.printWelcomeMessage(in);
+                clientViewer.printWelcomeMessage(in);
+                logger.info("Welcome message is printed");
 
                 sendRequest();
 
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 deserializeText();
 
-                System.out.println("Start showing result");
                 clientViewer.printFormattedText(desiredText);
             } finally {
                 clientSocket.close();
             }
         } catch (IOException | DAOException | ClassNotFoundException e) {
-            // TODO: log
-            e.printStackTrace();
+            logger.error(e);
         }
     }
 
     private static void sendRequest() throws IOException, DAOException {
-        BufferedWriter senderToServer = new BufferedWriter(new OutputStreamWriter(out));
-        clientViewer.printMessage("Enter your choice:");
-        senderToServer.write(consoleReader.readLine() + "\n\n");
+        String typeOfEdit = consoleReader.readLine() + "\n";
+        String allText = readerFromFile.readAllText();
+        logger.info("Read all text from file");
 
-        System.out.println("Sending file to server");
-        senderToServer.write(readerFromFile.readAllText());
-        senderToServer.flush();
+        String request = typeOfEdit + allText + "\n--end--\n";
+
+        out.write(request.getBytes());
+        out.flush();
+        logger.info("Send file to server");
     }
 
     private static void deserializeText() throws IOException, ClassNotFoundException {
-        System.out.println("Deserialize started");
+        // Ждем пока точно отправят объект
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        logger.info("Deserialize started");
         objectIn = new ObjectInputStream(in);
         desiredText = (Text) objectIn.readObject();
     }

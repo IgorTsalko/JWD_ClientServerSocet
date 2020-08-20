@@ -1,8 +1,8 @@
-package by.epamtc.tsalko.client.model.dao.parser;
+package by.epamtc.tsalko.client.model.parser;
 
 import by.epamtc.tsalko.bean.Component;
 import by.epamtc.tsalko.bean.impl.Sentence;
-import by.epamtc.tsalko.client.model.dao.exception.DAOException;
+import by.epamtc.tsalko.client.model.exception.DAOException;
 
 import java.util.ArrayList;
 import java.util.List;

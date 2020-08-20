@@ -1,7 +1,7 @@
-package by.epamtc.tsalko.client.model.dao;
+package by.epamtc.tsalko.client.model;
 
 import by.epamtc.tsalko.bean.impl.Text;
-import by.epamtc.tsalko.client.model.dao.exception.DAOException;
+import by.epamtc.tsalko.client.model.exception.DAOException;
 
 public interface TextDAO {
 

@@ -1,6 +1,6 @@
-package by.epamtc.tsalko.client.model.dao;
+package by.epamtc.tsalko.client.model;
 
-import by.epamtc.tsalko.client.model.dao.exception.DAOException;
+import by.epamtc.tsalko.client.model.exception.DAOException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
