@@ -20,13 +20,13 @@ public class ClientController {
     private static BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
     private static ClientViewer clientViewer = new ClientViewer();
     private static ReaderFromFile readerFromFile = new ReaderFromFile();
-    private static ObjectInputStream objectIn;
 
     private static Text desiredText;
 
     private static Socket clientSocket;
     private static InputStream in;
     private static OutputStream out;
+    private static ObjectInputStream objectIn;
 
     public static void main(String[] args) {
         startClient();
@@ -40,8 +40,9 @@ public class ClientController {
 
                 in = clientSocket.getInputStream();
                 out = clientSocket.getOutputStream();
+                objectIn = new ObjectInputStream(in);
 
-                clientViewer.printWelcomeMessage(in);
+                clientViewer.printWelcomeMessage(objectIn);
                 logger.info("Welcome message is printed");
 
                 sendRequest();
@@ -50,7 +51,11 @@ public class ClientController {
 
                 clientViewer.printFormattedText(desiredText);
             } finally {
+                objectIn.close();
+                in.close();
+                out.close();
                 clientSocket.close();
+                logger.info("Client is closed");
             }
         } catch (IOException | DAOException | ClassNotFoundException e) {
             logger.error(e);
@@ -78,7 +83,7 @@ public class ClientController {
         }
 
         logger.info("Deserialize started");
-        objectIn = new ObjectInputStream(in);
         desiredText = (Text) objectIn.readObject();
+        logger.info("Deserialize completed");
     }
 }

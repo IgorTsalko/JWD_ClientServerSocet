@@ -43,10 +43,11 @@ public class ServerController {
                 try {
                     in = clientSocket.getInputStream();
                     out = clientSocket.getOutputStream();
+                    objectOut = new ObjectOutputStream(out);
                     reader = new BufferedReader(new InputStreamReader(in));
 
                     logger.info("Sending welcome message");
-                    messageSender.sendWelcomeMessage(out);
+                    messageSender.sendWelcomeMessage(objectOut);
 
                     sendSerializableText();
                 } finally {
@@ -54,6 +55,7 @@ public class ServerController {
                     in.close();
                     out.close();
                     clientSocket.close();
+                    logger.info("Server is closed");
                 }
             } finally {
                 serverSocket.close();
@@ -65,13 +67,12 @@ public class ServerController {
 
     private static void sendSerializableText() throws IOException {
         Text formattedText = null;
-        objectOut = new ObjectOutputStream(out);
 
         String requestType = readEditType().strip();
         logger.info("Read request type");
 
         String allText = readAllText();
-        logger.info("Read allText from flow");
+        logger.info("Read allText from stream");
 
         Text text = textService.createText(allText);
         logger.info("Text is parsed");
@@ -81,13 +82,13 @@ public class ServerController {
         } else if (requestType.equals("2")) {
             formattedText = textService.formSentenceOppositeReplacementFirstLastWords(text);
         } else {
-            messageSender.sendError(out);
+            logger.error("Invalid edit code");
         }
 
         if (formattedText != null) {
             logger.info("Started serialize");
             objectOut.writeObject(formattedText);
-            logger.info("Text is serialized");
+            logger.info("Text is serialized and sent");
         } else {
             logger.error("Text didn't serialize");
         }
@@ -99,7 +100,7 @@ public class ServerController {
     }
 
     private static String readAllText() throws IOException {
-        logger.info("Start to read text from flow");
+        logger.info("Start to read text from stream");
         StringBuilder buff = new StringBuilder();
         String line;
         while (true) {
@@ -109,9 +110,6 @@ public class ServerController {
             }
             buff.append(line).append("\n");
         }
-        System.out.println("----------------------------------------------------");
-        System.out.println(buff);
-        System.out.println("----------------------------------------------------");
         return buff.toString();
     }
 }

@@ -8,8 +8,8 @@ import java.util.List;
 
 public class ClientViewer {
 
-    public void printWelcomeMessage(InputStream in) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in), 1);
+    public void printWelcomeMessage(ObjectInputStream objectIn) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(objectIn), 1);
         String line;
         while (true) {
             line = reader.readLine();
@@ -23,10 +23,13 @@ public class ClientViewer {
     public void printFormattedText(Text text) {
         List<Component> components = text.getText();
         StringBuilder buff = new StringBuilder();
+        buff.append("_____________________________________________________________\n");
 
         for (Component c : components) {
             buff.append(c.getContent()).append("\n");
         }
+
+        buff.append("_____________________________________________________________\n");
 
         System.out.println(buff.toString());
     }
