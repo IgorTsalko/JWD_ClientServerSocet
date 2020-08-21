@@ -11,49 +11,47 @@ import java.io.*;
 import java.net.Socket;
 
 public class ClientController {
-
     private static final Logger logger = LogManager.getLogger(ClientController.class);
 
-    private static final String HOST = "localhost";
-    private static final int PORT = 3575;
+    private static final int WAITING_TIME = 500;
 
-    private static BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
-    private static ClientViewer clientViewer = new ClientViewer();
-    private static ReaderFromFile readerFromFile = new ReaderFromFile();
+    private final BufferedReader consoleReader;
+    private final ClientViewer clientViewer;
+    private final ReaderFromFile readerFromFile;
 
-    private static Text desiredText;
+    private Text desiredText;
 
-    private static Socket clientSocket;
-    private static InputStream in;
-    private static OutputStream out;
-    private static ObjectInputStream objectIn;
+    private Socket clientSocket;
+    private ObjectInputStream objectIn;
+    private OutputStream out;
 
-    public static void main(String[] args) {
-        startClient();
+    public ClientController() {
+        consoleReader = new BufferedReader(new InputStreamReader(System.in));
+        clientViewer = new ClientViewer();
+        readerFromFile = new ReaderFromFile();
     }
 
-    public static void startClient() {
+    public void start(final String HOST, final int PORT) {
         try {
             try {
                 clientSocket = new Socket(HOST, PORT);
                 logger.info("Client started");
 
-                in = clientSocket.getInputStream();
+                objectIn = new ObjectInputStream(clientSocket.getInputStream());
                 out = clientSocket.getOutputStream();
-                objectIn = new ObjectInputStream(in);
 
                 clientViewer.printWelcomeMessage(objectIn);
                 logger.info("Welcome message is printed");
 
                 sendRequest();
+                logger.info("Request is sent");
 
                 deserializeText();
+                logger.info("Modified text is deserialized");
 
                 clientViewer.printFormattedText(desiredText);
+                logger.info("Modified text is printed");
             } finally {
-                objectIn.close();
-                in.close();
-                out.close();
                 clientSocket.close();
                 logger.info("Client is closed");
             }
@@ -62,7 +60,7 @@ public class ClientController {
         }
     }
 
-    private static void sendRequest() throws IOException, DAOException {
+    private void sendRequest() throws IOException, DAOException {
         String typeOfEdit = consoleReader.readLine() + "\n";
         String allText = readerFromFile.readAllText();
         logger.info("Read all text from file");
@@ -71,16 +69,15 @@ public class ClientController {
 
         out.write(request.getBytes());
         out.flush();
-        logger.info("Send file to server");
     }
 
-    private static void deserializeText() throws IOException, ClassNotFoundException {
-        // Ждем пока точно отправят объект
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    private void deserializeText() throws IOException, ClassNotFoundException {
+        // waiting for data from the server
+            try {
+                Thread.sleep(WAITING_TIME);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
         logger.info("Deserialize started");
         desiredText = (Text) objectIn.readObject();

@@ -4,112 +4,96 @@ import by.epamtc.tsalko.bean.impl.Text;
 import by.epamtc.tsalko.server.service.TextService;
 import by.epamtc.tsalko.server.service.exception.ServiceException;
 import by.epamtc.tsalko.server.service.impl.TextServiceImpl;
-import by.epamtc.tsalko.server.view.MessageSender;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ServerController {
-
     private static final Logger logger = LogManager.getLogger(ServerController.class);
 
-    private static final int PORT = 3575;
+    private TextService textService;
 
-    private static MessageSender messageSender;
-    private static TextService textService;
+    BufferedReader requestReader;
+    ObjectOutputStream objectOut;
 
-    private static Socket clientSocket;
-    private static ServerSocket serverSocket;
-    private static InputStream in;
-    private static OutputStream out;
-    private static ObjectOutputStream objectOut;
-    private static BufferedReader reader;
+    public ServerController() throws ServiceException {
+        textService = new TextServiceImpl();
+    }
 
-    public static void main(String[] args) {
-        try {
-            try {
-                messageSender = new MessageSender();
-                textService = new TextServiceImpl();
+    public void start(final Socket clientSocket) {
+        try (clientSocket) {
+            requestReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            objectOut = new ObjectOutputStream(clientSocket.getOutputStream());
 
-                serverSocket = new ServerSocket(PORT);
-                logger.info("Server started");
+            sendWelcomeMessage(objectOut);
+            logger.info("Sent welcome message");
 
-                clientSocket = serverSocket.accept();
-                logger.info("Connection established");
+            String editNumber = readEditNumber();
+            logger.info("Read request type");
 
-                try {
-                    in = clientSocket.getInputStream();
-                    out = clientSocket.getOutputStream();
-                    objectOut = new ObjectOutputStream(out);
-                    reader = new BufferedReader(new InputStreamReader(in));
+            String textData = readTextData();
+            logger.info("Read text data from stream");
 
-                    logger.info("Sending welcome message");
-                    messageSender.sendWelcomeMessage(objectOut);
+            Text text = textService.createText(textData);
+            logger.info("Text is parsed");
 
-                    sendSerializableText();
-                } finally {
-                    objectOut.close();
-                    in.close();
-                    out.close();
-                    clientSocket.close();
-                    logger.info("Server is closed");
-                }
-            } finally {
-                serverSocket.close();
+            Text modifiedText = modifyText(text, editNumber);
+            logger.info("Text is modified");
+
+            if (modifiedText != null) {
+                logger.info("Started serialize");
+                objectOut.writeObject(modifiedText);
+                logger.info("Text is serialized and sent");
+            } else {
+                logger.error("Text didn't serialize");
             }
-        } catch (IOException | ServiceException e) {
+        } catch (IOException e) {
             logger.error(e);
         }
+        logger.info("ClientSocket is closed");
     }
 
-    private static void sendSerializableText() throws IOException {
-        Text formattedText = null;
+    private void sendWelcomeMessage(ObjectOutputStream objectOut) throws IOException {
+        StringBuilder message = new StringBuilder()
+                .append("You can do one of this edit\n")
+                .append("Enter 1, if you want to form sentences in ascending order\n")
+                .append("Enter 2, if you want to form sentences with the replacement\n")
+                .append("of the first and last words in places\n")
+                .append("Enter your choice:\n")
+                .append("--end--\n");
 
-        String requestType = readEditType().strip();
-        logger.info("Read request type");
-
-        String allText = readAllText();
-        logger.info("Read allText from stream");
-
-        Text text = textService.createText(allText);
-        logger.info("Text is parsed");
-
-        if (requestType.equals("1")) {
-            formattedText = textService.formSentencesAscending(text);
-        } else if (requestType.equals("2")) {
-            formattedText = textService.formSentenceOppositeReplacementFirstLastWords(text);
-        } else {
-            logger.error("Invalid edit code");
-        }
-
-        if (formattedText != null) {
-            logger.info("Started serialize");
-            objectOut.writeObject(formattedText);
-            logger.info("Text is serialized and sent");
-        } else {
-            logger.error("Text didn't serialize");
-        }
+        objectOut.write(message.toString().getBytes());
+        objectOut.flush();
     }
 
-    private static String readEditType() throws IOException {
-        logger.info("Start to read edit type");
-        return reader.readLine();
+    private String readEditNumber() throws IOException {
+        return requestReader.readLine();
     }
 
-    private static String readAllText() throws IOException {
+    private String readTextData() throws IOException {
         logger.info("Start to read text from stream");
         StringBuilder buff = new StringBuilder();
         String line;
         while (true) {
-            line = reader.readLine();
+            line = requestReader.readLine();
             if (line.contains("--end--")) {
                 break;
             }
             buff.append(line).append("\n");
         }
         return buff.toString();
+    }
+
+    private Text modifyText(Text text, String editNumber) {
+        if (editNumber.equals("1")) {
+            return textService.formSentencesAscending(text);
+        } else if (editNumber.equals("2")) {
+            return textService.formSentenceOppositeReplacementFirstLastWords(text);
+        } else {
+            logger.error("Invalid edit code");
+            return null;
+        }
     }
 }
