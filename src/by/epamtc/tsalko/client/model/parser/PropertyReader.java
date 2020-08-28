@@ -18,14 +18,13 @@ public class PropertyReader {
     }
 
     public String getProperty(String propertyName) throws DAOException {
-        String property = null;
+        String property;
         try {
-            FileInputStream inputStream = new FileInputStream("resources/properties.txt");
+            FileInputStream inputStream = new FileInputStream("resources/regexp.properties");
             properties.load(inputStream);
             property = properties.getProperty(propertyName);
         } catch (IOException e) {
-            throw new DAOException("Ошибка properties.txt");
-            // TODO
+            throw new DAOException("Ошибка regexp.properties", e);
         }
 
         return property;

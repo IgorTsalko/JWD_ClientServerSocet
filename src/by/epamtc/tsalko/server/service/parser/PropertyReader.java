@@ -20,11 +20,11 @@ public class PropertyReader {
     public String getProperty(String propertyName) throws ServiceException {
         String property;
         try {
-            FileInputStream inputStream = new FileInputStream("resources/properties.txt");
+            FileInputStream inputStream = new FileInputStream("resources/regexp.properties");
             properties.load(inputStream);
             property = properties.getProperty(propertyName);
         } catch (IOException e) {
-            throw new ServiceException("Ошибка properties.txt");
+            throw new ServiceException("Ошибка regexp.properties");
         }
 
         return property;

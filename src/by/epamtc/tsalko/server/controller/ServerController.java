@@ -13,17 +13,19 @@ import java.net.Socket;
 public class ServerController {
     private static final Logger logger = LogManager.getLogger(ServerController.class);
 
+    private static final String TYPE_ENDING = "--end--";
+
     private TextService textService;
 
-    BufferedReader requestReader;
-    ObjectOutputStream objectOut;
+    private BufferedReader requestReader;
+    private ObjectOutputStream objectOut;
 
     public ServerController() throws ServiceException {
         textService = new TextServiceImpl();
     }
 
     public void start(final Socket clientSocket) {
-        try (clientSocket) {
+        try {
             requestReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             objectOut = new ObjectOutputStream(clientSocket.getOutputStream());
 
@@ -47,16 +49,16 @@ public class ServerController {
                 objectOut.writeObject(modifiedText);
                 logger.info("Text is serialized and sent");
             } else {
-                logger.error("Text didn't serialize");
+                logger.warn("Text didn't serialize, invalid error code");
+                sendErrorMessage();
             }
         } catch (IOException e) {
             logger.error(e);
         }
-        logger.info("ClientSocket is closed");
     }
 
     private void sendWelcomeMessage(ObjectOutputStream objectOut) throws IOException {
-        StringBuilder message = new StringBuilder()
+        StringBuilder welcomeMessage = new StringBuilder()
                 .append("You can do one of this edit\n")
                 .append("Enter 1, if you want to form sentences in ascending order\n")
                 .append("Enter 2, if you want to form sentences with the replacement\n")
@@ -64,8 +66,12 @@ public class ServerController {
                 .append("Enter your choice:\n")
                 .append("--end--\n");
 
-        objectOut.write(message.toString().getBytes());
+        objectOut.write(welcomeMessage.toString().getBytes());
         objectOut.flush();
+    }
+
+    private void sendErrorMessage() throws IOException {
+        objectOut.write("You entered invalid edit code".getBytes());
     }
 
     private String readEditNumber() throws IOException {
@@ -78,7 +84,7 @@ public class ServerController {
         String line;
         while (true) {
             line = requestReader.readLine();
-            if (line.contains("--end--")) {
+            if (line.contains(TYPE_ENDING)) {
                 break;
             }
             buff.append(line).append("\n");
@@ -92,7 +98,6 @@ public class ServerController {
         } else if (editNumber.equals("2")) {
             return textService.formSentenceOppositeReplacementFirstLastWords(text);
         } else {
-            logger.error("Invalid edit code");
             return null;
         }
     }

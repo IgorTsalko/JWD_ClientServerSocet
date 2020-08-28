@@ -5,6 +5,7 @@ import by.epamtc.tsalko.server.service.exception.ServiceException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -28,9 +29,17 @@ public class ServerStart {
 
                 ServerController serverController = new ServerController();
                 serverController.start(clientSocket);
+                clientSocket.close();
+                logger.info("ClientSocket is closed");
             }
         } catch (ServiceException | IOException e) {
             logger.error(e);
+        } finally {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                logger.error(e);
+            }
         }
         logger.info("Server is closed");
     }

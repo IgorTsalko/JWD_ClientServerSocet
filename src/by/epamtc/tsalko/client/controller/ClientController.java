@@ -14,6 +14,7 @@ public class ClientController {
     private static final Logger logger = LogManager.getLogger(ClientController.class);
 
     private static final int WAITING_TIME = 500;
+    private static final String TYPE_ENDING = "\n--end--\n";
 
     private final BufferedReader consoleReader;
     private final ClientViewer clientViewer;
@@ -65,7 +66,7 @@ public class ClientController {
         String allText = readerFromFile.readAllText();
         logger.info("Read all text from file");
 
-        String request = typeOfEdit + allText + "\n--end--\n";
+        String request = typeOfEdit + allText + TYPE_ENDING;
 
         out.write(request.getBytes());
         out.flush();
